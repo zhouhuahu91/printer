@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "node-thermal-printer": "^4.4.1"
+  }
+}
