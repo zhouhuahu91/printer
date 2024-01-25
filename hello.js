@@ -1,37 +1,45 @@
-const {
-  ThermalPrinter,
-  PrinterTypes,
-  CharacterSet,
-  BreakLine,
-} = require("node-thermal-printer");
+const { ThermalPrinter, PrinterTypes } = require("node-thermal-printer");
+const receiptline = require("receiptline");
+const sharp = require("sharp");
 
-async function example() {
-  const printer = new ThermalPrinter({
-    type: PrinterTypes.EPSON, // 'star' or 'epson'
-    interface: "/dev/usb/lp0",
-    options: {
-      timeout: 1000,
-    },
-    width: 48, // Number of characters in one line - default: 48
-    characterSet: CharacterSet.SLOVENIA, // Character set - default: SLOVENIA
-    breakLine: BreakLine.WORD, // Break line after WORD or CHARACTERS. Disabled with NONE - default: WORD
-    removeSpecialCharacters: false, // Removes special characters - default: false
-    lineCharacter: "-", // Use custom character for drawing lines - default: -
-  });
+// ReceiptLine
+const text = `{
+Ichigaya Terminal
+1-Y-X Kudan, Chiyoda-ku
+02-07-2021 21:00
+{border:line; width:30}
+^RECEIPT
+{border:space; width:*,2,10}
+^^^^周华                   | 2|     13.00
+CHIDORI                | 2|    172.80
+-------------------------------------
+{width:*,20}
+^TOTAL             |          ^185.80
+CASH               |           200.00
+CHANGE             |            14.20
+{code:20210207210001; option:48,hri}`;
 
-  const isConnected = await printer.isPrinterConnected();
-  console.log("Printer connected:", isConnected);
+let printer = new ThermalPrinter({
+  type: PrinterTypes.EPSON,
+  interface: "/dev/usb/lp0",
+});
 
-  printer.setTextSize(7, 7);
-  printer.print("yooo");
-  printer.println("test");
+const svg = receiptline.transform(text, {
+  cpl: 46,
+  encoding: "gb18030",
+  spacing: true,
+});
+
+const print = async () => {
+  const svgBuffer = Buffer.from(svg);
+  console.log("test");
+  const pngBuffer = await sharp(svgBuffer).png().toBuffer();
+  console.log("test");
+
+  await printer.printImageBuffer(pngBuffer);
   printer.cut();
-  try {
-    await printer.execute();
-    console.log("Print success.");
-  } catch (error) {
-    console.error("Print error:", error);
-  }
-}
 
-example();
+  printer.execute();
+};
+
+print();
