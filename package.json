@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "express": "^4.18.2",
     "node-thermal-printer": "^4.4.2",
     "receiptline": "^1.16.0",
     "sharp": "^0.32.6"
