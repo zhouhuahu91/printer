@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.18.2",
     "node-thermal-printer": "^4.4.2",
     "receiptline": "^1.16.0",

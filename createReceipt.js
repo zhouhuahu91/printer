@@ -21,7 +21,9 @@ ${formattedDate} ${formattedTime}
 ^^^${order.name}
 |${order.remarks && order.remarks}
 -
-^^^${order.time}\n-
+^^^${order.time}
+
+-
 `;
 
   order.cart.forEach((item) => {
@@ -85,7 +87,7 @@ ${formattedDate} ${formattedTime}
       // Options gets multiplied by the main item.
       for (const option in optionsCount) {
         receipt += `
-        |^^^${optionsCount[option] * item.qwt} ${option}
+        |^^^${optionsCount[option] * item.qwt} (${option})
         |${dutch[option]}
 `;
       }
@@ -120,10 +122,6 @@ Tasje ${euro(order.storeFees.plasticBagFee)}|
     `;
   }
 
-  receipt += `
--
-`;
-
   //  adds tip if customer gave a tip
   if (order.tip > 0) {
     receipt += `
@@ -132,10 +130,9 @@ Fooi ${euro(order.tip)}|
   }
 
   receipt += `
+-
 ^^^Totaal ${euro(order.total)}|
 `;
-
-  console.log(receipt);
 
   // ***** RECEIPT STYLING *****
 
