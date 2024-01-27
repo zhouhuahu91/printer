@@ -16,11 +16,12 @@ let printer = new ThermalPrinter({
 app.post("/print", async (req, res) => {
   try {
     const order = req.body; // The JSON object sent by the user is in req.body
-    const receipt = createReceipt(order);
+    const receipt = await createReceipt(order);
     // Check if printer is connected
     let isConnected = await printer.isPrinterConnected();
     // If connected we start printing.
     if (isConnected) {
+      console.log("printing");
       await printer.printImageBuffer(receipt);
       printer.cut();
       // We execute the print.
