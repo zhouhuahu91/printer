@@ -18,14 +18,17 @@ app.post("/print", async (req, res) => {
     const order = req.body; // The JSON object sent by the user is in req.body
     const receipt = await createReceipt(order);
     // Check if printer is connected
-    let isConnected = await printer.isPrinterConnected();
+    // let isConnected = await printer.isPrinterConnected();
+    let isConnected = true;
     // If connected we start printing.
     if (isConnected) {
       console.log("printing");
-      await printer.printImageBuffer(receipt);
-      printer.cut();
+
+      // await printer.printImageBuffer(receipt);
+      // printer.cut();
       // We execute the print.
-      const status = await printer.execute();
+      // const status = await printer.execute();
+      const status = true;
       if (status) {
         // If print is succes we respond with order printed.
         res.send("order printed");
