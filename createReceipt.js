@@ -90,13 +90,7 @@ ${formattedDate} ${formattedTime}
 
     receipt += ` | ${euro(item.price)}
     {w:auto}`;
-    // receipt += `{w:auto}`;
 
-    // If item has remarks we add it
-    if (item.remarks) {
-      receipt += `
-        |# ${item.remarks}`;
-    }
     // This part prints the options on it's own line
     // If the option is main we don't need to prin the options
     if (item.selectedOptionsForPrinter.length > 0 && !item.optionIsMain) {
