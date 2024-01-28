@@ -9,6 +9,13 @@ const euro = require("./euro");
 // This functions accepts an orders and returns a receipt the form of a PNGBuffer
 const createReceipt = async (order) => {
   const { formattedTime, formattedDate } = getTimeAndDate();
+
+  const capitalize = (str) => {
+    if (str && typeof str === "string") {
+      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    }
+    return str;
+  };
   // ***** RECEIPT STYLING *****
   let receipt = `{
 "^^^^New Hong Kong
@@ -18,23 +25,25 @@ Havenstraat 13
 0252 37 29 02
 ${formattedDate} ${formattedTime}
 
-^^^${order.name}
-|${order.remarks && order.remarks}
+^^^${capitalize(order.name)}
+|${order.remarks && `^^^# ${order.remarks}`}
+
 -
 ^^^${order.time}
 
--
-`;
+-`;
 
   order.cart.forEach((item) => {
     // This part print the chinese name
     receipt += `
+
     |^^^${item.qwt} ${item.name.zh}`;
 
+    // template to hold sides
+    const sidesCount = {};
+    const sidesCountDutch = {};
     // This part prints the sides after the item name if there are sides.
     if (item.selectedSidesForPrinter.length > 0) {
-      // template to hold sides
-      const sidesCount = {};
       item.selectedSidesForPrinter.forEach((side) => {
         // Check if name is in template
         if (sidesCount[side.name.zh]) {
@@ -43,6 +52,7 @@ ${formattedDate} ${formattedTime}
         } else {
           // If not we set the name to one
           sidesCount[side.name.zh] = 1;
+          sidesCountDutch[side.name.zh] = side.name.nl;
         }
       });
       // If there are sides we add this after the main item
@@ -50,19 +60,42 @@ ${formattedDate} ${formattedTime}
       // We print the sides next to it.
       // Sides gets multiplied by the main item.
       for (const side in sidesCount) {
-        receipt += ` ${sidesCount[side] * item.qwt} ${side}`;
+        const sideQwt = sidesCount[side] * item.qwt;
+        // if there is only one side no need to show 1.
+        if (sideQwt > 1) {
+          receipt += ` ${sideQwt}`;
+        }
+        receipt += ` ${side}`;
       }
     }
     // This part prints the itemm in dutch beneeth the chinese name.
     receipt += `
-    |${item.name.nl} | ${euro(item.price)}
-`;
+    {w:*,10}
+    |${item.name.nl}`;
+
+    // And behind the dutch name we also want to print out the sides that was chosen.
+    // If there are any of course.
+    if (item.selectedSidesForPrinter.length > 0) {
+      receipt += ",";
+
+      for (const side in sidesCount) {
+        const sideQwtDutch = sidesCount[side] * item.qwt;
+        // if there is only one side no need to show 1.
+        if (sideQwtDutch > 1) {
+          receipt += ` ${sideQwtDutch}`;
+        }
+        receipt += ` ${sidesCountDutch[side]}`;
+      }
+    }
+
+    receipt += ` | ${euro(item.price)}
+    {w:auto}`;
+    // receipt += `{w:auto}`;
 
     // If item has remarks we add it
     if (item.remarks) {
       receipt += `
-        |${item.remarks}    
-`;
+        |# ${item.remarks}`;
     }
     // This part prints the options on it's own line
     // If the option is main we don't need to prin the options
@@ -70,7 +103,7 @@ ${formattedDate} ${formattedTime}
       // template to hold options
       const optionsCount = {};
       // We need to know what to print in dutch
-      const dutch = {};
+      const optionsCountDutch = {};
       item.selectedOptionsForPrinter.forEach((option) => {
         // Check if name is in template
         if (optionsCount[option.name.zh]) {
@@ -80,7 +113,7 @@ ${formattedDate} ${formattedTime}
           // If not we set the name to one
           optionsCount[option.name.zh] = 1;
           // We connect the dutch translation to it.
-          dutch[option.name.zh] = option.name.nl;
+          optionsCountDutch[option.name.zh] = option.name.nl;
         }
       });
       // We print the options.
@@ -88,50 +121,48 @@ ${formattedDate} ${formattedTime}
       for (const option in optionsCount) {
         receipt += `
         |^^^${optionsCount[option] * item.qwt} (${option})
-        |${dutch[option]}
-`;
+        |${optionsCountDutch[option]}`;
       }
     }
   });
 
   // adds the total of all the items in the cart.
   receipt += `
+
 -
 
-Subtotaal ${euro(order.cart.reduce((x, y) => x + y.price, 0))}|
-`;
+Subtotaal ${euro(order.cart.reduce((x, y) => x + y.price, 0))}|`;
 
   // adds delivery cost of order is for delivery
   if (order.delivery) {
     receipt += `
-Bezorgkosten ${euro(order.storeFees.deliveryFee)}|
-    `;
+Bezorgkosten ${euro(order.storeFees.deliveryFee)}|`;
   }
 
   // adds fee for the bag if order.bag is true but only if order isn't for delivery bag fee is included in the delivery fee
   if (order.paymentMethod === "online") {
     receipt += `
-Transactiekosten ${euro(order.storeFees.transactionFee)}|
-    `;
+Transactiekosten ${euro(order.storeFees.transactionFee)}|`;
   }
 
   // adds fee for the bag if order.bag is true but only if order isn't for delivery bag fee is included in the delivery fee
   if (!order.delivery && order.bag) {
     receipt += `
-Tasje ${euro(order.storeFees.plasticBagFee)}|
-    `;
+Tasje ${euro(order.storeFees.plasticBagFee)}|`;
   }
 
   //  adds tip if customer gave a tip
   if (order.tip > 0) {
     receipt += `
-Fooi ${euro(order.tip)}|
-    `;
+Fooi ${euro(order.tip)}|`;
   }
 
   receipt += `
+
 -
 ^^^Totaal ${euro(order.total)}|
+
+^^^${order.paid ? "BETAALD" : "NIET BETAALD"}
 `;
 
   // ***** RECEIPT STYLING *****
