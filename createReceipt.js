@@ -11,10 +11,10 @@ const createReceipt = async (order) => {
   const { formattedTime, formattedDate } = getTimeAndDate();
 
   const capitalize = (str) => {
-    if (str && typeof str === "string") {
-      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-    }
-    return str;
+    return str
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
   };
   // ***** RECEIPT STYLING *****
   let receipt = `{
