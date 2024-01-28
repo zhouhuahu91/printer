@@ -7,9 +7,22 @@ const createReceipt = require("./createReceipt");
 
 const app = express();
 app.use(express.json()); // Middleware to parse JSON bodies
-app.use(cors());
+app.use(cors()); // Middleware to allow cors
 
-app.post("/print", async (req, res) => {
+// Define your secret API key
+const SECRET_API_KEY = process.env.PRINTER_API; // Replace with your actual API key
+
+// Middleware to check the API key in query parameters
+const checkAPIKey = (req, res, next) => {
+  const apiKey = req.qeury.key;
+  if (apiKey && apiKey === SECRET_API_KEY) {
+    next(); // Correct API key, proceed to the route handler
+  } else {
+    res.status(401).send("Invalid or missing API key"); // Incorrect or missing API key
+  }
+};
+
+app.post("/print", checkAPIKey, async (req, res) => {
   try {
     const order = req.body; // The JSON object sent by the user is in req.body
     // Initializes the printer. // Need to be in the function otherwise it caches the old reqeusts
