@@ -1,3 +1,5 @@
+require("dotenv").config({ path: "./.env.local" });
+
 const express = require("express");
 const cors = require("cors");
 // Imports from for the printer to connect to Epson printer
@@ -14,7 +16,7 @@ const SECRET_API_KEY = process.env.PRINTER_API; // Replace with your actual API 
 
 // Middleware to check the API key in query parameters
 const checkAPIKey = (req, res, next) => {
-  const apiKey = req.qeury.key;
+  const apiKey = req.query.key;
   if (apiKey && apiKey === SECRET_API_KEY) {
     next(); // Correct API key, proceed to the route handler
   } else {
