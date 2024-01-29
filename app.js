@@ -1,65 +1,69 @@
 require("dotenv").config({ path: "./.env.local" });
 
-const express = require("express");
-const cors = require("cors");
+const db = require("./firebase.js");
 // Imports from for the printer to connect to Epson printer
 const { ThermalPrinter, PrinterTypes } = require("node-thermal-printer");
 // This functions turns the order into a png receipt
-const createReceipt = require("./createReceipt");
+const createReceipt = require("./createReceipt.js");
 
-const app = express();
-app.use(express.json()); // Middleware to parse JSON bodies
-app.use(cors()); // Middleware to allow cors
+(async () => {
+  const q = db
+    .collection("orders")
+    .where("printed", "==", false)
+    .where("isPrinting", "==", true);
 
-// Define your secret API key
-const SECRET_API_KEY = process.env.PRINTER_API; // Replace with your actual API key
-
-// Middleware to check the API key in query parameters
-const checkAPIKey = (req, res, next) => {
-  const apiKey = req.query.key;
-  if (apiKey && apiKey === SECRET_API_KEY) {
-    next(); // Correct API key, proceed to the route handler
-  } else {
-    res.status(401).send("Invalid or missing API key"); // Incorrect or missing API key
-  }
-};
-
-app.post("/print", checkAPIKey, async (req, res) => {
-  try {
-    const order = req.body; // The JSON object sent by the user is in req.body
-    // Initializes the printer. // Need to be in the function otherwise it caches the old reqeusts
-    let printer = new ThermalPrinter({
-      type: PrinterTypes.EPSON,
-      interface: "/dev/usb/lp0",
+  q.onSnapshot((snapshot) => {
+    const data = snapshot.docs.map((doc) => {
+      return { ...doc.data(), id: doc.id };
     });
-    const receipt = await createReceipt(order);
-    // Check if printer is connected
-    let isConnected = await printer.isPrinterConnected();
-    // If connected we start printing.
-    if (isConnected) {
+
+    // We loop over each order that hasn't been printed yet but is in the process of printing.
+    data.forEach(async (order) => {
+      // We get the snapshot if this order.
+      const ref = db.doc(`orders/${order.id}`);
+      const orderSnapshot = await ref.get();
+
+      // We order doesn't exist we return from this order.
+      if (orderSnapshot.exists === false) return; // Just in case order get deleted while in this process.
+
+      // We initiate the printer.
+      let printer = new ThermalPrinter({
+        type: PrinterTypes.EPSON,
+        interface: "/dev/usb/lp0",
+      });
+      // We check if the printer is connected
+      let isConnected = await printer.isPrinterConnected();
+
+      if (isConnected === false) {
+        // If not connected we set order back to not printing
+        await ref.update({
+          isPrinting: false,
+        });
+        return console.log("Printer is not connected.");
+      }
+
+      // ***** HERE WE ACTUALLY PRINT THE ORDER ****
+      // First we need the receipt
+      const receipt = await createReceipt(order);
+
+      // Then print the receipt and wait for response
       printer.printImageBuffer(receipt);
       printer.cut();
-      // We execute the print.
       const status = await printer.execute();
-      // const status = true;
-      if (status) {
-        // If print is succes we respond with order printed.
-        res.send("order printed");
-      } else {
-        // If print failed we throw error
-        throw new Error("Failed to execute print command");
-      }
-    } else {
-      // If Printer is not connected we throw error
-      throw new Error("Printer not connected");
-    }
-  } catch (e) {
-    // Handle any errors that occur during processing
-    res.status(500).send("Something went wrong: " + e.message);
-  }
-});
 
-const port = 8000;
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+      // If status is good we update isPrinting to false and printed to true
+      if (status) {
+        await ref.update({
+          isPrinting: false,
+          printed: true,
+        });
+
+        // Something went wrong and we only set isPrinting back to false
+      } else {
+        await ref.update({
+          isPrinting: false,
+        });
+      }
+    });
+  });
+})();
