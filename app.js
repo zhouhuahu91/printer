@@ -4,97 +4,82 @@ const db = require("./firebase.js");
 // Imports from for the printer to connect to Epson printer
 const { ThermalPrinter, PrinterTypes } = require("node-thermal-printer");
 // This functions turns the order into a png receipt
-const createReceipt = require("./createReceipt.js");
+const createOrderReceipt = require("./createOrderReceipt.js");
 
 (async () => {
   try {
     console.log("Printer is online.");
 
-    const q = db
-      .collection("orders")
-      .where("printed", "==", false)
-      .where("isPrinting", "==", true);
+    const q = db.collection("printer");
 
     q.onSnapshot((snapshot) => {
       const data = snapshot.docs.map((doc) => {
         return { ...doc.data(), id: doc.id };
       });
 
-      // We loop over each order that hasn't been printed yet but is in the process of printing.
-      data.forEach(async (order) => {
-        // This array contains orders currently being printed.
-        let ordersBeingProcessed = [];
+      data.forEach(async (printJob) => {
+        // We need to know what kind of printjob it is.
 
-        // We get the snapshot if this order.
-        const ref = db.doc(`orders/${order.id}`);
-        const orderSnapshot = await ref.get();
+        // If type is an order than we create an order receipt and print it.
+        if (printJob.type === "order") {
+          // The order we want to print
+          const order = printJob.printContent;
 
-        // We order doesn't exist we return from this order.
-        if (orderSnapshot.exists === false) {
-          ordersBeingProcessed = ordersBeingProcessed.filter(
-            (id) => id !== order.id
-          );
-          return console.log("order does not exist");
-        } // Just in case order get deleted while in this process.
+          // Get ref to make future changes to this order
+          const ref = db.doc(`orders/${order.id}`);
+          const orderSnapshot = await ref.get();
 
-        // If the order id is already in this array we can return
-        if (ordersBeingProcessed.includes(order.id)) {
-          return console.log(
-            `${order.name} with the id of ${order.id} is already in process.}`,
-            ordersBeingProcessed
-          );
-        }
-        // otherwise we push the id into it.
-        ordersBeingProcessed.push(order.id);
-        // We initiate the printer.
-        let printer = new ThermalPrinter({
-          type: PrinterTypes.EPSON,
-          interface: "/dev/usb/lp0",
-        });
-        // We check if the printer is connected
-        let isConnected = await printer.isPrinterConnected();
+          // If order doesn't exist we exit this function and remove order from printer.
+          if (orderSnapshot.exists === false) {
+            await db.collection("printer").doc(printJob.id).delete();
+            return console.log("order does not exist");
+          } // Just in case order get deleted while in this process.
 
-        if (isConnected === false) {
-          // If not connected we set order back to not printing
-          await ref.update({
-            isPrinting: false,
+          // We init the printer
+          let printer = new ThermalPrinter({
+            type: PrinterTypes.EPSON,
+            interface: "/dev/usb/lp0",
           });
-          // We remove the order from the process array.
-          ordersBeingProcessed = ordersBeingProcessed.filter(
-            (id) => id !== order.id
-          );
-          return console.log("Printer is not connected.");
-        }
+          // We check if the printer is connected
+          let isConnected = await printer.isPrinterConnected();
 
-        // ***** HERE WE ACTUALLY PRINT THE ORDER ****
+          if (isConnected === false) {
+            // If not connected we set order back to not printing
+            await ref.update({
+              isPrinting: false,
+            });
+            // We remove order from the printer
+            await db.collection("printer").doc(printJob.id).delete();
+            // And exit the function
+            return console.log("Printer is not connected.");
+          }
 
-        // First we need the receipt
-        const receipt = await createReceipt(order);
+          // ***** HERE WE ACTUALLY PRINT THE ORDER ****
 
-        // Then print the receipt and wait for response
-        printer.printImageBuffer(receipt);
-        printer.cut();
-        const status = await printer.execute();
+          // First we need the receipt
+          const orderReceipt = await createOrderReceipt(order);
 
-        // If status is good we update isPrinting to false and printed to true
-        if (status) {
-          await ref.update({
-            isPrinting: false,
-            printed: true,
-          });
-          // If printed and printed is being set we remove the order from the process array.
-          ordersBeingProcessed = ordersBeingProcessed.filter(
-            (id) => id !== order.id
-          );
-          // Something went wrong and we only set isPrinting back to false
-        } else {
-          await ref.update({
-            isPrinting: false,
-          });
-          // And we remove the id from processing.
-          ordersBeingProcessed = ordersBeingProcessed.filter(
-            (id) => id !== order.id
-          );
+          // Then print the receipt and wait for response
+          printer.printImageBuffer(orderReceipt);
+          printer.cut();
+          const status = await printer.execute();
+
+          // If status is good we update isPrinting to false and printed to true
+          if (status) {
+            await ref.update({
+              isPrinting: false,
+              printed: true,
+            });
+            // We remove order from the printer
+            await db.collection("printer").doc(printJob.id).delete();
+            // Something went wrong and we set isPrinting back to false
+          } else {
+            await ref.update({
+              isPrinting: false,
+            });
+            // We remove order from the printer
+            await db.collection("printer").doc(printJob.id).delete();
+          }
         }
       });
     });

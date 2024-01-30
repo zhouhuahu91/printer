@@ -7,7 +7,7 @@ const getTimeAndDate = require("./getTimeAndDate");
 const euro = require("./euro");
 
 // This functions accepts an orders and returns a receipt the form of a PNGBuffer
-const createReceipt = async (order) => {
+const createOrderReceipt = async (order) => {
   const { formattedTime, formattedDate } = getTimeAndDate();
 
   const capitalize = (str) => {
@@ -174,4 +174,4 @@ ${formattedDate} ${formattedTime}
   return pngBuffer;
 };
 
-module.exports = createReceipt;
+module.exports = createOrderReceipt;
