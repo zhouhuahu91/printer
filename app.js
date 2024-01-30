@@ -45,6 +45,11 @@ const createReceipt = require("./createReceipt.js");
       }
 
       // ***** HERE WE ACTUALLY PRINT THE ORDER ****
+      // If we reach this far we can set isPrinting back to false
+      // This is safer in case we print the order more than once.
+      await ref.update({
+        isPrinting: false,
+      });
       // First we need the receipt
       const receipt = await createReceipt(order);
 
@@ -53,18 +58,15 @@ const createReceipt = require("./createReceipt.js");
       printer.cut();
       const status = await printer.execute();
 
-      // If status is good we update isPrinting to false and printed to true
+      // If status is good we update printed to true
       if (status) {
         await ref.update({
-          isPrinting: false,
           printed: true,
         });
 
         // Something went wrong and we only set isPrinting back to false
       } else {
-        await ref.update({
-          isPrinting: false,
-        });
+        console.log("Something went wrong with printing");
       }
     });
   });
