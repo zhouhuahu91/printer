@@ -7,6 +7,8 @@ const { ThermalPrinter, PrinterTypes } = require("node-thermal-printer");
 const createReceipt = require("./createReceipt.js");
 
 (async () => {
+  console.log("Printer is now running");
+
   const q = db
     .collection("orders")
     .where("printed", "==", false)
