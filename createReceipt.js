@@ -37,7 +37,7 @@ ${formattedDate} ${formattedTime}
     // This part print the chinese name
     receipt += `
 
-    |^^^${item.qwt} ${item.name.zh}`;
+    |^^^^${item.qwt} ${item.name.zh}`;
 
     // template to hold sides
     const sidesCount = {};
