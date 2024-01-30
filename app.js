@@ -39,11 +39,10 @@ const createReceipt = require("./createReceipt.js");
 
         // If the order id is already in this array we can return
         if (ordersBeingProcessed.includes(order.id)) {
-          await ref.update({
-            isPrinting: false,
-          });
-
-          return console.log("Order is already in process of being printed.");
+          return console.log(
+            `${order.name} with the id of ${order.id} is already in process.}`,
+            ordersBeingProcessed
+          );
         }
         // otherwise we push the id into it.
         ordersBeingProcessed.push(order.id);
