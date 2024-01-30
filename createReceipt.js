@@ -114,7 +114,7 @@ ${formattedDate} ${formattedTime}
       // Options gets multiplied by the main item.
       for (const option in optionsCount) {
         receipt += `
-        |^^^${optionsCount[option] * item.qwt} (${option})
+        |^^^^${optionsCount[option] * item.qwt} (${option})
         |${optionsCountDutch[option]}`;
       }
     }
