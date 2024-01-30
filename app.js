@@ -8,7 +8,7 @@ const createReceipt = require("./createReceipt.js");
 
 (async () => {
   try {
-    console.log("Printer is now running");
+    console.log("Printer is online.");
 
     const q = db
       .collection("orders")
@@ -24,7 +24,6 @@ const createReceipt = require("./createReceipt.js");
       data.forEach(async (order) => {
         // This array contains orders currently being printed.
         let ordersBeingProcessed = [];
-        ordersBeingProcessed.push(order.id);
 
         // We get the snapshot if this order.
         const ref = db.doc(`orders/${order.id}`);
@@ -38,6 +37,16 @@ const createReceipt = require("./createReceipt.js");
           return console.log("order does not exist");
         } // Just in case order get deleted while in this process.
 
+        // If the order id is already in this array we can return
+        if (ordersBeingProcessed.includes(order.id)) {
+          await ref.update({
+            isPrinting: false,
+          });
+
+          return console.log("Order is already in process of being printed.");
+        }
+        // otherwise we push the id into it.
+        ordersBeingProcessed.push(order.id);
         // We initiate the printer.
         let printer = new ThermalPrinter({
           type: PrinterTypes.EPSON,
