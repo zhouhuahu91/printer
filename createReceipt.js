@@ -25,11 +25,11 @@ Havenstraat 13
 0252 37 29 02
 ${formattedDate} ${formattedTime}
 
-^^^^${capitalize(order.name)}
+^^^${capitalize(order.name)}
 |${order.remarks && `^^^# ${order.remarks}`}
 
 -
-^^^^${order.time}
+^^^${order.time}
 
 -`;
 
@@ -71,7 +71,7 @@ ${formattedDate} ${formattedTime}
     // This part prints the itemm in dutch beneeth the chinese name.
     receipt += `
     {w:*,10}
-    |^^^${item.name.nl}`;
+    |^^${item.name.nl}`;
 
     // And behind the dutch name we also want to print out the sides that was chosen.
     // If there are any of course.
@@ -88,7 +88,7 @@ ${formattedDate} ${formattedTime}
       }
     }
 
-    receipt += ` | ${euro(item.price)}
+    receipt += ` | ^^${euro(item.price)}
     {w:auto}`;
 
     // This part prints the options on it's own line
@@ -115,7 +115,7 @@ ${formattedDate} ${formattedTime}
       for (const option in optionsCount) {
         receipt += `
         |^^^^${optionsCount[option] * item.qwt} (${option})
-        |${optionsCountDutch[option]}`;
+        |^^${optionsCountDutch[option]}`;
       }
     }
   });
@@ -125,38 +125,38 @@ ${formattedDate} ${formattedTime}
 
 -
 
-^^^Subtotaal ${euro(order.cart.reduce((x, y) => x + y.price, 0))}|`;
+^^Subtotaal ${euro(order.cart.reduce((x, y) => x + y.price, 0))}|`;
 
   // adds delivery cost of order is for delivery
   if (order.delivery) {
     receipt += `
-^^^Bezorgkosten ${euro(order.storeFees.deliveryFee)}|`;
+^^Bezorgkosten ${euro(order.storeFees.deliveryFee)}|`;
   }
 
   // adds fee for the bag if order.bag is true but only if order isn't for delivery bag fee is included in the delivery fee
   if (order.paymentMethod === "online") {
     receipt += `
-^^^Transactiekosten ${euro(order.storeFees.transactionFee)}|`;
+^^Transactiekosten ${euro(order.storeFees.transactionFee)}|`;
   }
 
   // adds fee for the bag if order.bag is true but only if order isn't for delivery bag fee is included in the delivery fee
   if (!order.delivery && order.bag) {
     receipt += `
-^^^Tasje ${euro(order.storeFees.plasticBagFee)}|`;
+^^Tasje ${euro(order.storeFees.plasticBagFee)}|`;
   }
 
   //  adds tip if customer gave a tip
   if (order.tip > 0) {
     receipt += `
-^^^Fooi ${euro(order.tip)}|`;
+^^Fooi ${euro(order.tip)}|`;
   }
 
   receipt += `
 
 -
-^^^^Totaal ${euro(order.total)}|
+^^^Totaal ${euro(order.total)}|
 
-^^^^${order.paid ? "BETAALD" : "NIET BETAALD"}
+^^^${order.paid ? "BETAALD" : "NIET BETAALD"}
 `;
 
   // ***** RECEIPT STYLING *****
