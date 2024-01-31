@@ -60,7 +60,7 @@ const createOrderReceipt = require("./createOrderReceipt.js");
           printer.cut();
           const status = await printer.execute();
 
-          // If status is good we update isPrinting to false and printed to true
+          // If status is good we update printed to true
           if (status) {
             await ref.update({
               printed: true,
