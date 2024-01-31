@@ -29,7 +29,7 @@ ${formattedDate} ${formattedTime}
 |${order.remarks && `^^^# ${order.remarks}`}
 
 -
-^^^${order.time}
+^^^${order.delivery ? "BEZORGEN" : order.time}
 
 -`;
 
