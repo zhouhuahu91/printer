@@ -44,10 +44,6 @@ const createOrderReceipt = require("./createOrderReceipt.js");
           let isConnected = await printer.isPrinterConnected();
 
           if (isConnected === false) {
-            // If not connected we set order back to not printing
-            await ref.update({
-              isPrinting: false,
-            });
             // We remove order from the printer
             await db.collection("printer").doc(printJob.id).delete();
             // And exit the function
@@ -67,19 +63,18 @@ const createOrderReceipt = require("./createOrderReceipt.js");
           // If status is good we update isPrinting to false and printed to true
           if (status) {
             await ref.update({
-              isPrinting: false,
               printed: true,
             });
             // We remove order from the printer
             await db.collection("printer").doc(printJob.id).delete();
-            // Something went wrong and we set isPrinting back to false
           } else {
-            await ref.update({
-              isPrinting: false,
-            });
             // We remove order from the printer
             await db.collection("printer").doc(printJob.id).delete();
           }
+        } else {
+          // Else this printjob does not exist and we remove it from server.
+          console.log(`${printJob.type} printjob doesn't exist`);
+          await db.collection("printer").doc(printJob.id).delete();
         }
       });
     });
