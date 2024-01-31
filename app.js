@@ -7,16 +7,16 @@ const { ThermalPrinter, PrinterTypes } = require("node-thermal-printer");
 const createOrderReceipt = require("./createOrderReceipt.js");
 
 (async () => {
-  try {
-    console.log("Printer is online.");
+  console.log("Printer is online.");
 
-    const q = db.collection("printer");
+  const q = db.collection("printer");
 
-    q.onSnapshot((snapshot) => {
-      const data = snapshot.docs.map((doc) => {
-        return { ...doc.data(), id: doc.id };
-      });
+  q.onSnapshot((snapshot) => {
+    const data = snapshot.docs.map((doc) => {
+      return { ...doc.data(), id: doc.id };
+    });
 
+    try {
       data.forEach(async (printJob) => {
         // We need to know what kind of printjob it is.
 
@@ -77,8 +77,8 @@ const createOrderReceipt = require("./createOrderReceipt.js");
           await db.collection("printer").doc(printJob.id).delete();
         }
       });
-    });
-  } catch (e) {
-    console.log(e.message);
-  }
+    } catch (e) {
+      console.log(e.message);
+    }
+  });
 })();
