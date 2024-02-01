@@ -68,6 +68,13 @@ ${formattedDate} ${formattedTime}
         receipt += ` ${side}`;
       }
     }
+
+    // Adds the item remarks to the receipt.
+    if (item.remarks) {
+      receipt += `
+      ^^^${item.remarks}`;
+    }
+
     // This part prints the itemm in dutch beneeth the chinese name.
     receipt += `
     {w:*,10}
