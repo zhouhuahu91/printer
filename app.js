@@ -58,18 +58,21 @@ const createOrderReceipt = require("./createOrderReceipt.js");
           // Then print the receipt and wait for response
           printer.printImageBuffer(orderReceipt);
           printer.cut();
-          const status = await printer.execute();
-
-          // If status is good we update printed to true
-          if (status) {
-            await ref.update({
-              printed: true,
-            });
-            // We remove order from the printer
-            await db.collection("printer").doc(printJob.id).delete();
-          } else {
-            // We remove order from the printer
-            await db.collection("printer").doc(printJob.id).delete();
+          try {
+            const status = await printer.execute();
+            // If status is good we update printed to true
+            if (status) {
+              await ref.update({
+                printed: true,
+              });
+              // We remove order from the printer
+              await db.collection("printer").doc(printJob.id).delete();
+            } else {
+              // We remove order from the printer
+              await db.collection("printer").doc(printJob.id).delete();
+            }
+          } catch (e) {
+            console.log(e.message);
           }
         } else {
           // Else this printjob does not exist and we remove it from server.
