@@ -74,8 +74,7 @@ const createDailyReport = require("./createDailyReport.js")(async () => {
             console.log(e.message);
           }
         } else if (printJob === "dailyReport") {
-          const orders = printJob.printConent;
-
+          const svg = printJob.printConent;
           // We init the printer
           let printer = new ThermalPrinter({
             type: PrinterTypes.EPSON,
@@ -94,7 +93,8 @@ const createDailyReport = require("./createDailyReport.js")(async () => {
           // ***** HERE WE ACTUALLY PRINT THE ORDER ****
 
           // First we need the receipt
-          const dailyReport = await createDailyReport(orders);
+          const svgBuffer = Buffer.from(svg);
+          const dailyReport = await sharp(svgBuffer).png().toBuffer();
 
           // Then print the receipt and wait for response
           printer.printImageBuffer(dailyReport);
