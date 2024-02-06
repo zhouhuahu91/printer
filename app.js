@@ -3,9 +3,12 @@ require("dotenv").config({ path: "./.env.local" });
 const db = require("./firebase.js");
 // Imports from for the printer to connect to Epson printer
 const { ThermalPrinter, PrinterTypes } = require("node-thermal-printer");
+// Converts the SVG to a png buffer. Thermal printer only accepts png
+const sharp = require("sharp");
 // This functions turns the order into a png receipt
 const createOrderReceipt = require("./createOrderReceipt.js");
-const createDailyReport = require("./createDailyReport.js")(async () => {
+
+(async () => {
   console.log("Printer is online.");
 
   const q = db.collection("printer");
@@ -73,8 +76,12 @@ const createDailyReport = require("./createDailyReport.js")(async () => {
           } catch (e) {
             console.log(e.message);
           }
+
+          // ********* IF printjob is daily report we print the daily report ***************
         } else if (printJob === "dailyReport") {
+          // sends the report in svg string directly
           const svg = printJob.printConent;
+
           // We init the printer
           let printer = new ThermalPrinter({
             type: PrinterTypes.EPSON,
@@ -103,11 +110,9 @@ const createDailyReport = require("./createDailyReport.js")(async () => {
             const status = await printer.execute();
             // If status is good we update printed to true
             if (status) {
-              await ref.update({
-                printed: true,
-              });
               // We remove order from the printer
               await db.collection("printer").doc(printJob.id).delete();
+              console.log("Daily report has been printed");
             } else {
               // We remove order from the printer
               await db.collection("printer").doc(printJob.id).delete();
