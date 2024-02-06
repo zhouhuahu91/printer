@@ -100,7 +100,7 @@ const createOrderReceipt = require("./createOrderReceipt.js");
           // ***** HERE WE ACTUALLY PRINT THE ORDER ****
 
           // First we need the receipt
-          const svgBuffer = Buffer.from(svg);
+          const svgBuffer = Buffer.from(svg, "base64");
           const dailyReport = await sharp(svgBuffer).png().toBuffer();
 
           // Then print the receipt and wait for response
