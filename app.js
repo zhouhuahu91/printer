@@ -79,7 +79,7 @@ const convertStringToPng = require("./convertStringToPng.js");
           // ********* IF printjob is daily report we print the daily report ***************
         } else if (printJob.type === "dailyReport") {
           // sends the report in svg string directly
-          const markup = printJob.printConent;
+          const markup = printJob.printContent;
 
           // We init the printer
           let printer = new ThermalPrinter({
