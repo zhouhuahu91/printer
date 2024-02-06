@@ -7,8 +7,7 @@ const { ThermalPrinter, PrinterTypes } = require("node-thermal-printer");
 const sharp = require("sharp");
 // This functions turns the order into a png receipt
 const createOrderReceipt = require("./createOrderReceipt.js");
-
-(async () => {
+const convertStringToPng = require("./convertStringToPng.js")(async () => {
   console.log("Printer is online.");
 
   const q = db.collection("printer");
@@ -80,7 +79,7 @@ const createOrderReceipt = require("./createOrderReceipt.js");
           // ********* IF printjob is daily report we print the daily report ***************
         } else if (printJob.type === "dailyReport") {
           // sends the report in svg string directly
-          const svg = printJob.printConent;
+          const markup = printJob.printConent;
 
           // We init the printer
           let printer = new ThermalPrinter({
@@ -100,8 +99,7 @@ const createOrderReceipt = require("./createOrderReceipt.js");
           // ***** HERE WE ACTUALLY PRINT THE ORDER ****
 
           // First we need the receipt
-          const svgBuffer = Buffer.from(svg, "base64");
-          const dailyReport = await sharp(svgBuffer).png().toBuffer();
+          const dailyReport = await convertStringToPng(markup);
 
           // Then print the receipt and wait for response
           printer.printImageBuffer(dailyReport);
