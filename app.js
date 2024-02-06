@@ -5,8 +5,7 @@ const db = require("./firebase.js");
 const { ThermalPrinter, PrinterTypes } = require("node-thermal-printer");
 // This functions turns the order into a png receipt
 const createOrderReceipt = require("./createOrderReceipt.js");
-
-(async () => {
+const createDailyReport = require("./createDailyReport.js")(async () => {
   console.log("Printer is online.");
 
   const q = db.collection("printer");
@@ -57,6 +56,48 @@ const createOrderReceipt = require("./createOrderReceipt.js");
 
           // Then print the receipt and wait for response
           printer.printImageBuffer(orderReceipt);
+          printer.cut();
+          try {
+            const status = await printer.execute();
+            // If status is good we update printed to true
+            if (status) {
+              await ref.update({
+                printed: true,
+              });
+              // We remove order from the printer
+              await db.collection("printer").doc(printJob.id).delete();
+            } else {
+              // We remove order from the printer
+              await db.collection("printer").doc(printJob.id).delete();
+            }
+          } catch (e) {
+            console.log(e.message);
+          }
+        } else if (printJob === "dailyReport") {
+          const orders = printJob.printConent;
+
+          // We init the printer
+          let printer = new ThermalPrinter({
+            type: PrinterTypes.EPSON,
+            interface: "/dev/usb/lp0",
+          });
+          // We check if the printer is connected
+          let isConnected = await printer.isPrinterConnected();
+
+          if (isConnected === false) {
+            // We remove order from the printer
+            await db.collection("printer").doc(printJob.id).delete();
+            // And exit the function
+            return console.log("Printer is not connected.");
+          }
+
+          // ***** HERE WE ACTUALLY PRINT THE ORDER ****
+
+          // First we need the receipt
+          const dailyReport = await createDailyReport(orders);
+
+          // Then print the receipt and wait for response
+          printer.printImageBuffer(dailyReport);
           printer.cut();
           try {
             const status = await printer.execute();
