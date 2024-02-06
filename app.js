@@ -78,7 +78,7 @@ const createOrderReceipt = require("./createOrderReceipt.js");
           }
 
           // ********* IF printjob is daily report we print the daily report ***************
-        } else if (printJob === "dailyReport") {
+        } else if (printJob.type === "dailyReport") {
           // sends the report in svg string directly
           const svg = printJob.printConent;
 
