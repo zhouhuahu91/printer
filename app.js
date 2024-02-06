@@ -4,8 +4,8 @@ const db = require("./firebase.js");
 // Imports from for the printer to connect to Epson printer
 const { ThermalPrinter, PrinterTypes } = require("node-thermal-printer");
 // This functions turns the order into a png receipt
+const sharp = require("sharp");
 const createOrderReceipt = require("./createOrderReceipt.js");
-const convertStringToPng = require("./convertStringToPng.js");
 
 (async () => {
   console.log("Printer is online.");
@@ -79,7 +79,7 @@ const convertStringToPng = require("./convertStringToPng.js");
           // ********* IF printjob is daily report we print the daily report ***************
         } else if (printJob.type === "dailyReport") {
           // sends the report in svg string directly
-          const markup = printJob.printContent;
+          const base64String = printJob.printContent;
 
           // We init the printer
           let printer = new ThermalPrinter({
@@ -99,7 +99,8 @@ const convertStringToPng = require("./convertStringToPng.js");
           // ***** HERE WE ACTUALLY PRINT THE ORDER ****
 
           // First we need the receipt
-          const dailyReport = await convertStringToPng(markup);
+          const svgBuffer = Buffer.from(base64String, "base64");
+          const dailyReport = await sharp(svgBuffer).png().toBuffer();
 
           // Then print the receipt and wait for response
           printer.printImageBuffer(dailyReport);
