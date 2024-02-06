@@ -3,11 +3,11 @@ require("dotenv").config({ path: "./.env.local" });
 const db = require("./firebase.js");
 // Imports from for the printer to connect to Epson printer
 const { ThermalPrinter, PrinterTypes } = require("node-thermal-printer");
-// Converts the SVG to a png buffer. Thermal printer only accepts png
-const sharp = require("sharp");
 // This functions turns the order into a png receipt
 const createOrderReceipt = require("./createOrderReceipt.js");
-const convertStringToPng = require("./convertStringToPng.js")(async () => {
+const convertStringToPng = require("./convertStringToPng.js");
+
+(async () => {
   console.log("Printer is online.");
 
   const q = db.collection("printer");
