@@ -119,6 +119,49 @@ const createOrderReceipt = require("./createOrderReceipt.js");
           } catch (e) {
             console.log(e.message);
           }
+          // ********** IF CUSTOMER WANTS TO PRINT A RECEIPT *********
+        } else if (printJob.type === "customerReceipt") {
+          // sends the report in svg string directly
+          const base64String = printJob.printContent;
+
+          // We init the printer
+          let printer = new ThermalPrinter({
+            type: PrinterTypes.EPSON,
+            interface: "/dev/usb/lp0",
+          });
+          // We check if the printer is connected
+          let isConnected = await printer.isPrinterConnected();
+
+          if (isConnected === false) {
+            // We remove order from the printer
+            await db.collection("printer").doc(printJob.id).delete();
+            // And exit the function
+            return console.log("Printer is not connected.");
+          }
+
+          // ***** HERE WE ACTUALLY PRINT THE ORDER ****
+
+          // First we need the receipt
+          const svgBuffer = Buffer.from(base64String, "base64");
+          const customerReceipt = await sharp(svgBuffer).png().toBuffer();
+
+          // Then print the receipt and wait for response
+          printer.printImageBuffer(customerReceipt);
+          printer.cut();
+          try {
+            const status = await printer.execute();
+            // If status is good we update printed to true
+            if (status) {
+              // We remove order from the printer
+              await db.collection("printer").doc(printJob.id).delete();
+              console.log("Customer receipt has been printed");
+            } else {
+              // We remove order from the printer
+              await db.collection("printer").doc(printJob.id).delete();
+            }
+          } catch (e) {
+            console.log(e.message);
+          }
         } else {
           // Else this printjob does not exist and we remove it from server.
           console.log(`${printJob.type} printjob doesn't exist`);
