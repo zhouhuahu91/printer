@@ -19,8 +19,22 @@ const createOrderReceipt = require("./createOrderReceipt.js");
 
     try {
       data.forEach(async (printJob) => {
-        // We need to know what kind of printjob it is.
+        // We init the printer
+        let printer = new ThermalPrinter({
+          type: PrinterTypes.EPSON,
+          interface: "/dev/usb/lp0",
+        });
+        // We check if the printer is connected
+        let isConnected = await printer.isPrinterConnected();
 
+        if (isConnected === false) {
+          // We remove order from the printer
+          await db.collection("printer").doc(printJob.id).delete();
+          // And exit the function
+          return console.log("Printer is not connected.");
+        }
+
+        // We need to know what kind of printjob it is.
         // If type is an order than we create an order receipt and print it.
         if (printJob.type === "order") {
           // The order we want to print
@@ -35,21 +49,6 @@ const createOrderReceipt = require("./createOrderReceipt.js");
             await db.collection("printer").doc(printJob.id).delete();
             return console.log("order does not exist");
           } // Just in case order get deleted while in this process.
-
-          // We init the printer
-          let printer = new ThermalPrinter({
-            type: PrinterTypes.EPSON,
-            interface: "/dev/usb/lp0",
-          });
-          // We check if the printer is connected
-          let isConnected = await printer.isPrinterConnected();
-
-          if (isConnected === false) {
-            // We remove order from the printer
-            await db.collection("printer").doc(printJob.id).delete();
-            // And exit the function
-            return console.log("Printer is not connected.");
-          }
 
           // ***** HERE WE ACTUALLY PRINT THE ORDER ****
 
@@ -81,23 +80,6 @@ const createOrderReceipt = require("./createOrderReceipt.js");
           // sends the report in svg string directly
           const base64String = printJob.printContent;
 
-          // We init the printer
-          let printer = new ThermalPrinter({
-            type: PrinterTypes.EPSON,
-            interface: "/dev/usb/lp0",
-          });
-          // We check if the printer is connected
-          let isConnected = await printer.isPrinterConnected();
-
-          if (isConnected === false) {
-            // We remove order from the printer
-            await db.collection("printer").doc(printJob.id).delete();
-            // And exit the function
-            return console.log("Printer is not connected.");
-          }
-
-          // ***** HERE WE ACTUALLY PRINT THE ORDER ****
-
           // First we need the receipt
           const svgBuffer = Buffer.from(base64String, "base64");
           const dailyReport = await sharp(svgBuffer).png().toBuffer();
@@ -123,23 +105,6 @@ const createOrderReceipt = require("./createOrderReceipt.js");
         } else if (printJob.type === "customerReceipt") {
           // sends the report in svg string directly
           const base64String = printJob.printContent;
-
-          // We init the printer
-          let printer = new ThermalPrinter({
-            type: PrinterTypes.EPSON,
-            interface: "/dev/usb/lp0",
-          });
-          // We check if the printer is connected
-          let isConnected = await printer.isPrinterConnected();
-
-          if (isConnected === false) {
-            // We remove order from the printer
-            await db.collection("printer").doc(printJob.id).delete();
-            // And exit the function
-            return console.log("Printer is not connected.");
-          }
-
-          // ***** HERE WE ACTUALLY PRINT THE ORDER ****
 
           // First we need the receipt
           const svgBuffer = Buffer.from(base64String, "base64");
