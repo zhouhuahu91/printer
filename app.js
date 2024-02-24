@@ -127,6 +127,37 @@ const createOrderReceipt = require("./createOrderReceipt.js");
           } catch (e) {
             console.log(e.message);
           }
+
+          // ********* IF WE WANT TO PRINT A RECEIPT FOR A TABLE ********
+        } else if (printJob.type === "tableReceipt") {
+          // sends the report in svg string directly
+          const base64String = printJob.printContent;
+
+          // First we need the receipt
+          const svgBuffer = Buffer.from(base64String, "base64");
+          const tableReceipt = await sharp(svgBuffer).png().toBuffer();
+
+          // Then print the receipt and wait for response
+          printer.printImageBuffer(tableReceipt);
+          printer.cut();
+
+          try {
+            const status = await printer.execute();
+            // If status is good we update printed to true
+            if (status) {
+              // We remove order from the printer
+              await db.collection("printer").doc(printJob.id).delete();
+              const ref = db.doc(`tables/${printJob.id}`);
+              await ref.update({
+                printed: true,
+              });
+            } else {
+              // We remove order from the printer
+              await db.collection("printer").doc(printJob.id).delete();
+            }
+          } catch (e) {
+            console.log(e.message);
+          }
         } else {
           // Else this printjob does not exist and we remove it from server.
           console.log(`${printJob.type} printjob doesn't exist`);
