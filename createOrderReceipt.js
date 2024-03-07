@@ -26,7 +26,6 @@ Havenstraat 13
 ${formattedDate} ${formattedTime}
 
 ^^^${capitalize(order.name)}
-|${order.remarks && `^^^# ${order.remarks}`}
 
 -
 ^^^${order.delivery ? "BEZORGEN" : order.time}
