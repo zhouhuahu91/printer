@@ -25,7 +25,7 @@ Havenstraat 13
 0252 37 29 02
 ${formattedDate} ${formattedTime}
 
-^^^${capitalize(order.name)}
+^^^${order.name === "asap" ? "^马上" : capitalize(order.name)}
 
 -
 ^^^${order.delivery ? "BEZORGEN" : order.time}
