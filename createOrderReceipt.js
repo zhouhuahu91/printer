@@ -27,9 +27,7 @@ ${formattedDate} ${formattedTime}
 
 ^^^${order.name === "asap" ? "^马上" : capitalize(order.name)}
 ${
-  order.delivery
-    ? `^^^${order.address.street} ${order.address.houseNumber}`
-    : ""
+  order.delivery ? `^^${order.address.street} ${order.address.houseNumber}` : ""
 }${order.delivery ? "\n" : ""}
 -
 ^^^${order.delivery ? "BEZORGEN" : order.time}
