@@ -30,8 +30,7 @@ ${
   order.delivery
     ? `^^^${order.address.street} ${order.address.houseNumber}`
     : ""
-}
-
+}${order.delivery ? "\n" : ""}
 -
 ^^^${order.delivery ? "BEZORGEN" : order.time}
 
