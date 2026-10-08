@@ -12,13 +12,13 @@ const createOrderReceipt = require("./createOrderReceipt.js");
 
   const q = db.collection("printer");
 
-  q.onSnapshot((snapshot) => {
+  q.onSnapshot(async (snapshot) => {
     const data = snapshot.docs.map((doc) => {
       return { ...doc.data(), id: doc.id };
     });
 
     try {
-      data.forEach(async (printJob) => {
+      for (const printJob of data) {
         // We init the printer
         let printer = new ThermalPrinter({
           type: PrinterTypes.EPSON,
@@ -31,7 +31,8 @@ const createOrderReceipt = require("./createOrderReceipt.js");
           // We remove order from the printer
           await db.collection("printer").doc(printJob.id).delete();
           // And exit the function
-          return console.log("Printer is not connected.");
+          console.log("Printer is not connected.");
+          continue;
         }
 
         // We need to know what kind of printjob it is.
@@ -47,7 +48,8 @@ const createOrderReceipt = require("./createOrderReceipt.js");
           // If order doesn't exist we exit this function and remove order from printer.
           if (orderSnapshot.exists === false) {
             await db.collection("printer").doc(printJob.id).delete();
-            return console.log("order does not exist");
+            console.log("order does not exist");
+            continue;
           } // Just in case order get deleted while in this process.
 
           // ***** HERE WE ACTUALLY PRINT THE ORDER ****
@@ -199,7 +201,7 @@ const createOrderReceipt = require("./createOrderReceipt.js");
           console.log(`${printJob.type} printjob doesn't exist`);
           await db.collection("printer").doc(printJob.id).delete();
         }
-      });
+      }
     } catch (e) {
       console.log(e.message);
     }
